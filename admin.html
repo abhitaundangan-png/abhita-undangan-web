@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor Undangan | Abhita Undangan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: {
+                colors: { brand: { dark:'#1e2d24', sage:'#4A7c59', cream:'#fbf9f6', gold:'#C5A880', pink:'#D9A0A0' } },
+                fontFamily: { serif:['Playfair Display','serif'], sans:['Plus Jakarta Sans','sans-serif'] }
+            }}
+        }
+    </script>
+    <style>
+        body { background:#f4f6f4; font-family:'Plus Jakarta Sans',sans-serif; }
+        .tab-btn { transition: all .2s ease; }
+        .tab-btn.active { background: #4A7c59; color: #fff; box-shadow: 0 4px 14px rgba(74,124,89,0.3); }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: fadeUp .3s ease; }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+        .form-label { display:block; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#4A7c59; margin-bottom:.4rem; }
+        .form-input { width:100%; padding:.75rem 1rem; background:#fff; border:1.5px solid #e0ece4; border-radius:.75rem; font-size:.875rem; transition:border-color .2s; outline:none; }
+        .form-input:focus { border-color:#4A7c59; box-shadow:0 0 0 3px rgba(74,124,89,.12); }
+        .card-section { background:#fff; border-radius:1.5rem; padding:1.75rem; box-shadow:0 2px 12px rgba(30,45,36,.06); border:1px solid #e8f0ea; }
+        .photo-preview { width:120px; height:120px; border-radius:50%; object-fit:cover; border:3px solid #e0ece4; }
+        .photo-placeholder { width:120px; height:120px; border-radius:50%; background:#e8f0ea; display:flex; align-items:center; justify-content:center; color:#4A7c59; font-size:2rem; border:2px dashed #b0d4bc; }
+        .gallery-preview { width:90px; height:90px; object-fit:cover; border-radius:.75rem; border:2px solid #e0ece4; }
+        .gallery-placeholder { width:90px; height:90px; border-radius:.75rem; background:#e8f0ea; display:flex; align-items:center; justify-content:center; color:#b0c4b0; font-size:1.4rem; border:2px dashed #c0d8c4; cursor:pointer; }
+        .gallery-slot { position:relative; }
+        .gallery-slot .remove-btn { position:absolute; top:-6px; right:-6px; width:22px; height:22px; background:#e53e3e; color:#fff; border-radius:50%; border:none; cursor:pointer; font-size:.65rem; display:flex; align-items:center; justify-content:center; }
+        .saved-toast { position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%); background:#4A7c59; color:#fff; padding:.75rem 2rem; border-radius:99px; font-size:.85rem; font-weight:600; z-index:999; box-shadow:0 8px 24px rgba(74,124,89,.4); display:none; }
+        .saved-toast.show { display:flex; align-items:center; gap:.5rem; animation:fadeUp .3s ease; }
+    </style>
+</head>
+<body class="pb-32" style="visibility:hidden;">
+
+    <!-- Auth Guard Overlay: menutupi halaman sampai Firebase Auth selesai dicek -->
+    <div id="auth-guard" style="position:fixed;inset:0;z-index:9999;background:#fbf9f6;display:flex;align-items:center;justify-content:center;visibility:visible;">
+        <div style="text-align:center;">
+            <div style="width:48px;height:48px;border:4px solid #e8f0eb;border-top-color:#4A7c59;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;"></div>
+            <p style="font-family:sans-serif;color:#4A7c59;font-size:14px;font-weight:600;">Memeriksa sesi login...</p>
+        </div>
+        <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+    </div>
+
+    <!-- ===== HEADER ===== -->
+    <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-brand-sage/10 shadow-sm">
+        <div class="max-w-4xl mx-auto px-4 py-3.5 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <a href="index.html" class="w-9 h-9 rounded-xl bg-brand-cream border border-brand-sage/20 flex items-center justify-center text-brand-sage hover:bg-brand-sage hover:text-white transition text-sm">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+                <div>
+                    <p class="font-serif font-bold text-brand-dark text-base leading-tight" id="page-title">Editor Undangan</p>
+                    <p class="text-xs text-brand-sage font-semibold" id="page-subtitle">Memuat tema...</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="Tamu/index.html" class="hidden sm:flex items-center gap-1.5 text-xs font-bold text-brand-dark/70 hover:text-brand-sage transition px-3 py-2 rounded-lg hover:bg-brand-sage/10">
+                    <i class="fa-solid fa-book-open-reader"></i> Buku Tamu
+                </a>
+                <a href="#" id="preview-btn" target="_blank" class="items-center gap-1.5 text-xs font-bold text-brand-sage border border-brand-sage/30 px-3 py-2 rounded-lg hover:bg-brand-sage/10 transition hidden sm:flex">
+                    <i class="fa-solid fa-eye"></i> Pratinjau
+                </a>
+                <button onclick="saveAllData()" class="bg-brand-sage text-white text-xs font-bold px-5 py-2.5 rounded-full hover:bg-brand-dark transition shadow-md flex items-center gap-1.5">
+                    <i class="fa-solid fa-floppy-disk"></i> Simpan
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-4xl mx-auto px-4 pt-6">
+
+        <!-- ===== TAB NAVIGATION ===== -->
+        <div class="flex gap-2 overflow-x-auto pb-2 mb-6 scrollbar-hide">
+            <button onclick="switchTab('mempelai')" id="tab-btn-mempelai" class="tab-btn active flex-shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold text-brand-sage bg-white border border-brand-sage/20">
+                <i class="fa-solid fa-heart mr-1.5"></i> Mempelai
+            </button>
+            <button onclick="switchTab('acara')" id="tab-btn-acara" class="tab-btn flex-shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold text-brand-sage bg-white border border-brand-sage/20">
+                <i class="fa-solid fa-calendar-check mr-1.5"></i> Acara
+            </button>
+            <button onclick="switchTab('foto')" id="tab-btn-foto" class="tab-btn flex-shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold text-brand-sage bg-white border border-brand-sage/20">
+                <i class="fa-solid fa-image mr-1.5"></i> Foto
+            </button>
+            <button onclick="switchTab('kado')" id="tab-btn-kado" class="tab-btn flex-shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold text-brand-sage bg-white border border-brand-sage/20">
+                <i class="fa-solid fa-gift mr-1.5"></i> Kado
+            </button>
+            <button onclick="switchTab('bagikan')" id="tab-btn-bagikan" class="tab-btn flex-shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold text-brand-sage bg-white border border-brand-sage/20">
+                <i class="fa-solid fa-share-nodes mr-1.5"></i> Bagikan
+            </button>
+            <button onclick="switchTab('klien')" id="tab-btn-klien" class="hidden tab-btn flex-shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold text-red-600 bg-red-50 border border-red-200">
+                <i class="fa-solid fa-users-gear mr-1.5"></i> Kelola Klien
+            </button>
+        </div>
+
+        <!-- ========================= -->
+        <!-- TAB 1: MEMPELAI          -->
+        <!-- ========================= -->
+        <div id="panel-mempelai" class="tab-panel active space-y-5">
+
+            <!-- Pasangan -->
+            <div class="card-section">
+                <h2 class="font-serif text-lg font-bold text-brand-dark mb-5"><i class="fa-solid fa-heart text-brand-pink mr-2"></i>Data Pasangan</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                        <label class="form-label">Nama Panggilan Pria</label>
+                        <input type="text" id="f-pria-panggilan" class="form-input" placeholder="cth: Alvin">
+                    </div>
+                    <div>
+                        <label class="form-label">Nama Panggilan Wanita</label>
+                        <input type="text" id="f-wanita-panggilan" class="form-input" placeholder="cth: Dian">
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <label class="form-label">Tanggal Tampil di Halaman Utama</label>
+                    <input type="text" id="f-tanggal-tampil" class="form-input" placeholder="cth: Minggu, 20 September 2026">
+                </div>
+                <div class="mt-4">
+                    <label class="form-label">Target Countdown (Format: YYYY-MM-DDTHH:mm:ss)</label>
+                    <input type="datetime-local" id="f-countdown-target" class="form-input">
+                </div>
+            </div>
+
+            <!-- Mempelai Pria -->
+            <div class="card-section">
+                <h3 class="font-bold text-brand-dark mb-4"><i class="fa-solid fa-mars text-blue-500 mr-2"></i>Mempelai Pria</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="form-label">Nama Lengkap</label>
+                        <input type="text" id="f-pria-nama" class="form-input" placeholder="cth: Alvin Yudha Pratama, S.T.">
+                    </div>
+                    <div>
+                        <label class="form-label">Nama Orang Tua</label>
+                        <input type="text" id="f-pria-ortu" class="form-input" placeholder="cth: Bpk. Ahmad & Ibu Siti">
+                    </div>
+                    <div>
+                        <label class="form-label">Anak Ke / Keterangan (Opsional)</label>
+                        <input type="text" id="f-pria-ket" class="form-input" placeholder="cth: Putra Pertama / Putra Bungsu">
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="form-label">Username Instagram</label>
+                            <input type="text" id="f-pria-ig" class="form-input" placeholder="cth: @alvin_yudha">
+                        </div>
+                        <div>
+                            <label class="form-label">Link Instagram</label>
+                            <input type="url" id="f-pria-ig-url" class="form-input" placeholder="https://instagram.com/...">
+                        </div>
+                    </div>
+                    <div id="pria-address-wrap">
+                        <label class="form-label">Alamat (Opsional, untuk tema Green)</label>
+                        <input type="text" id="f-pria-alamat" class="form-input" placeholder="cth: Jl. Merdeka No. 1, Jakarta">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mempelai Wanita -->
+            <div class="card-section">
+                <h3 class="font-bold text-brand-dark mb-4"><i class="fa-solid fa-venus text-brand-pink mr-2"></i>Mempelai Wanita</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="form-label">Nama Lengkap</label>
+                        <input type="text" id="f-wanita-nama" class="form-input" placeholder="cth: Dian Khoirun Nisa, S.E.">
+                    </div>
+                    <div>
+                        <label class="form-label">Nama Orang Tua</label>
+                        <input type="text" id="f-wanita-ortu" class="form-input" placeholder="cth: Bpk. Budi & Ibu Ratna">
+                    </div>
+                    <div>
+                        <label class="form-label">Anak Ke / Keterangan (Opsional)</label>
+                        <input type="text" id="f-wanita-ket" class="form-input" placeholder="cth: Putri Pertama / Putri Bungsu">
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="form-label">Username Instagram</label>
+                            <input type="text" id="f-wanita-ig" class="form-input" placeholder="cth: @dian_nisa">
+                        </div>
+                        <div>
+                            <label class="form-label">Link Instagram</label>
+                            <input type="url" id="f-wanita-ig-url" class="form-input" placeholder="https://instagram.com/...">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label">Alamat (Opsional, untuk tema Green)</label>
+                        <input type="text" id="f-wanita-alamat" class="form-input" placeholder="cth: Jl. Merdeka No. 2, Jakarta">
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- end panel-mempelai -->
+
+        <!-- ========================= -->
+        <!-- TAB 2: ACARA              -->
+        <!-- ========================= -->
+        <div id="panel-acara" class="tab-panel space-y-5">
+
+            <!-- Akad Nikah -->
+            <div class="card-section">
+                <h3 class="font-bold text-brand-dark mb-4"><i class="fa-solid fa-ring text-brand-gold mr-2"></i>Akad Nikah</h3>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="form-label">Tanggal Tampil</label>
+                            <input type="text" id="f-akad-tanggal" class="form-input" placeholder="cth: Minggu, 20 September 2026">
+                        </div>
+                        <div>
+                            <label class="form-label">Waktu</label>
+                            <input type="text" id="f-akad-waktu" class="form-input" placeholder="cth: 08.00 WIB - Selesai">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label">Nama Tempat / Gedung</label>
+                        <input type="text" id="f-akad-tempat" class="form-input" placeholder="cth: Masjid Agung Al-Falah">
+                    </div>
+                    <div>
+                        <label class="form-label">Alamat Lengkap</label>
+                        <textarea id="f-akad-alamat" class="form-input" rows="2" placeholder="cth: Jl. Mawar No. 12, Kebayoran Baru, Jakarta Selatan"></textarea>
+                    </div>
+                    <div>
+                        <label class="form-label">Link Google Maps</label>
+                        <input type="url" id="f-akad-maps" class="form-input" placeholder="https://maps.google.com/?q=...">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resepsi -->
+            <div class="card-section">
+                <h3 class="font-bold text-brand-dark mb-4"><i class="fa-solid fa-champagne-glasses text-brand-gold mr-2"></i>Resepsi Pernikahan</h3>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="form-label">Tanggal Tampil</label>
+                            <input type="text" id="f-resepsi-tanggal" class="form-input" placeholder="cth: Minggu, 20 September 2026">
+                        </div>
+                        <div>
+                            <label class="form-label">Waktu</label>
+                            <input type="text" id="f-resepsi-waktu" class="form-input" placeholder="cth: 10.00 - 14.00 WIB">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label">Nama Tempat / Gedung</label>
+                        <input type="text" id="f-resepsi-tempat" class="form-input" placeholder="cth: Grand Ballroom Hotel Mulia">
+                    </div>
+                    <div>
+                        <label class="form-label">Alamat Lengkap</label>
+                        <textarea id="f-resepsi-alamat" class="form-input" rows="2" placeholder="cth: Jl. Asia Afrika No. 8, Senayan, Jakarta Pusat"></textarea>
+                    </div>
+                    <div>
+                        <label class="form-label">Link Google Maps</label>
+                        <input type="url" id="f-resepsi-maps" class="form-input" placeholder="https://maps.google.com/?q=...">
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- end panel-acara -->
+
+        <!-- ========================= -->
+        <!-- TAB 3: FOTO               -->
+        <!-- ========================= -->
+        <div id="panel-foto" class="tab-panel space-y-5">
+
+            <!-- Foto Mempelai -->
+            <div class="card-section">
+                <h3 class="font-bold text-brand-dark mb-5"><i class="fa-regular fa-images text-brand-sage mr-2"></i>Foto Mempelai</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                    <!-- Foto Pria -->
+                    <div class="flex flex-col items-center gap-3 text-center">
+                        <div id="pria-photo-preview-wrap">
+                            <div class="photo-placeholder" id="pria-photo-placeholder"><i class="fa-solid fa-user-tie"></i></div>
+                            <img id="pria-photo-preview" src="" alt="Foto Pria" class="photo-preview hidden">
+                        </div>
+                        <p class="text-sm font-bold text-brand-dark">Mempelai Pria</p>
+                        <p class="text-xs text-gray-400">JPG/PNG, maks 2MB. Disimpan otomatis.</p>
+                        <label class="cursor-pointer bg-brand-sage/10 text-brand-sage text-xs font-bold px-4 py-2 rounded-full hover:bg-brand-sage hover:text-white transition">
+                            <i class="fa-solid fa-upload mr-1"></i> Upload Foto
+                            <input type="file" id="f-pria-foto" accept="image/*" class="hidden" onchange="handlePhotoUpload(this,'pria')">
+                        </label>
+                        <button onclick="clearPhoto('pria')" class="text-xs text-red-400 hover:text-red-600 transition hidden" id="pria-clear-btn">
+                            <i class="fa-solid fa-trash mr-1"></i> Hapus Foto
+                        </button>
+                    </div>
+                    <!-- Foto Wanita -->
+                    <div class="flex flex-col items-center gap-3 text-center">
+                        <div>
+                            <div class="photo-placeholder" id="wanita-photo-placeholder"><i class="fa-solid fa-user"></i></div>
+                            <img id="wanita-photo-preview" src="" alt="Foto Wanita" class="photo-preview hidden">
+                        </div>
+                        <p class="text-sm font-bold text-brand-dark">Mempelai Wanita</p>
+                        <p class="text-xs text-gray-400">JPG/PNG, maks 2MB. Disimpan otomatis.</p>
+                        <label class="cursor-pointer bg-brand-sage/10 text-brand-sage text-xs font-bold px-4 py-2 rounded-full hover:bg-brand-sage hover:text-white transition">
+                            <i class="fa-solid fa-upload mr-1"></i> Upload Foto
+                            <input type="file" id="f-wanita-foto" accept="image/*" class="hidden" onchange="handlePhotoUpload(this,'wanita')">
+                        </label>
+                        <button onclick="clearPhoto('wanita')" class="text-xs text-red-400 hover:text-red-600 transition hidden" id="wanita-clear-btn">
+                            <i class="fa-solid fa-trash mr-1"></i> Hapus Foto
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Galeri -->
+            <div class="card-section">
+                <h3 class="font-bold text-brand-dark mb-2"><i class="fa-solid fa-images text-brand-sage mr-2"></i>Galeri Foto</h3>
+                <p class="text-xs text-gray-400 mb-5">Upload hingga 6 foto galeri. Foto yang diupload disimpan di browser (localStorage).</p>
+                <div class="flex flex-wrap gap-3" id="gallery-grid">
+                    <!-- Diisi oleh JavaScript -->
+                </div>
+                <input type="file" id="f-gallery-input" accept="image/*" class="hidden" onchange="handleGalleryUpload(this)">
+            </div>
+
+        </div><!-- end panel-foto -->
+
+        <!-- ========================= -->
+        <!-- TAB 4: KADO DIGITAL       -->
+        <!-- ========================= -->
+        <div id="panel-kado" class="tab-panel space-y-5">
+
+            <div id="kado-unavailable" class="hidden card-section text-center py-10">
+                <i class="fa-solid fa-gift text-4xl text-gray-300 mb-4 block"></i>
+                <p class="font-bold text-gray-500">Fitur Kado Digital tidak tersedia</p>
+                <p class="text-sm text-gray-400 mt-1">Tema <strong>Flora Pink</strong> tidak memiliki section Kado Digital.</p>
+            </div>
+
+            <div id="kado-available" class="space-y-5">
+                <!-- Rekening 1 -->
+                <div class="card-section">
+                    <h3 class="font-bold text-brand-dark mb-4"><i class="fa-solid fa-building-columns text-brand-sage mr-2"></i>Rekening / Bank 1</h3>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label">Nama Bank / E-Wallet</label>
+                                <input type="text" id="f-rek1-bank" class="form-input" placeholder="cth: BCA / BRI / DANA / GoPay">
+                            </div>
+                            <div>
+                                <label class="form-label">Nomor Rekening / Dompet</label>
+                                <input type="text" id="f-rek1-nomor" class="form-input" placeholder="cth: 1234567890">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="form-label">Atas Nama</label>
+                            <input type="text" id="f-rek1-nama" class="form-input" placeholder="cth: Dian Khoirun Nisa">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rekening 2 -->
+                <div class="card-section">
+                    <h3 class="font-bold text-brand-dark mb-4"><i class="fa-solid fa-wallet text-brand-sage mr-2"></i>Rekening / Bank 2</h3>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label">Nama Bank / E-Wallet</label>
+                                <input type="text" id="f-rek2-bank" class="form-input" placeholder="cth: BNI / Mandiri / OVO / DANA">
+                            </div>
+                            <div>
+                                <label class="form-label">Nomor Rekening / Dompet</label>
+                                <input type="text" id="f-rek2-nomor" class="form-input" placeholder="cth: 081234567890">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="form-label">Atas Nama</label>
+                            <input type="text" id="f-rek2-nama" class="form-input" placeholder="cth: Alvin Yudha Pratama">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- end panel-kado -->
+
+        <!-- ========================= -->
+        <!-- TAB 5: BAGIKAN            -->
+        <!-- ========================= -->
+        <div id="panel-bagikan" class="tab-panel space-y-5">
+
+            <div class="card-section">
+                <h3 class="font-bold text-brand-dark mb-1"><i class="fa-solid fa-wand-magic-sparkles text-brand-sage mr-2"></i>Generator Link Tamu</h3>
+                <p class="text-xs text-gray-400 mb-5">Buat tautan khusus yang menampilkan nama tamu di sampul undangan secara otomatis.</p>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="form-label">Nama Tamu Undangan</label>
+                        <input type="text" id="share-guest-name" class="form-input" placeholder="cth: Budi Santoso & Istri">
+                    </div>
+                    <div>
+                        <label class="form-label">Nomor WhatsApp Tamu (Opsional)</label>
+                        <div class="flex gap-2">
+                            <span class="flex-shrink-0 flex items-center justify-center px-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm font-bold">+62</span>
+                            <input type="tel" id="share-guest-phone" class="form-input" placeholder="cth: 08123456789">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label">Template Pesan WhatsApp</label>
+                        <textarea id="share-message" rows="5" class="form-input resize-none">Halo [Nama Tamu],
+
+Dengan mengharap rahmat Allah SWT, kami mengundang Anda untuk menghadiri acara pernikahan kami. Silakan buka tautan undangan digital kami berikut:
+
+[Tautan Undangan]
+
+Terima kasih atas doa dan kehadirannya.</textarea>
+                        <p class="text-[10px] text-gray-400 mt-1">Gunakan <strong class="text-brand-sage">[Nama Tamu]</strong> dan <strong class="text-brand-sage">[Tautan Undangan]</strong> sebagai penanda.</p>
+                    </div>
+                    <button onclick="generateLink()" class="w-full py-3.5 bg-brand-sage text-white font-bold rounded-xl hover:bg-brand-dark transition shadow-md flex items-center justify-center gap-2 text-sm">
+                        <i class="fa-solid fa-gears"></i> Generate Link Undangan
+                    </button>
+                </div>
+
+                <!-- Result -->
+                <div id="share-result" class="hidden mt-6 p-5 bg-brand-cream/60 rounded-2xl border border-brand-sage/15">
+                    <label class="form-label">Tautan Undangan</label>
+                    <div class="flex gap-2 mb-4">
+                        <input type="text" id="share-generated-url" readonly class="form-input font-mono text-xs">
+                        <button onclick="copyShareLink()" class="flex-shrink-0 px-4 py-2.5 bg-brand-gold text-white text-xs font-bold rounded-xl hover:bg-brand-dark transition flex items-center gap-1">
+                            <i class="fa-regular fa-copy"></i> <span id="copy-share-text">Salin</span>
+                        </button>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <button onclick="sendWhatsApp()" class="flex-1 py-3 bg-[#25D366] hover:bg-[#128C7E] text-white text-sm font-bold rounded-xl transition flex items-center justify-center gap-2">
+                            <i class="fa-brands fa-whatsapp text-base"></i> Kirim WhatsApp
+                        </button>
+                        <button onclick="testLink()" class="py-3 px-5 border-2 border-brand-sage/20 hover:border-brand-sage text-brand-sage text-sm font-bold rounded-xl transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Tes
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick links -->
+            <div class="card-section">
+                <h3 class="font-bold text-brand-dark mb-4"><i class="fa-solid fa-link text-brand-sage mr-2"></i>Tautan Cepat</h3>
+                <div class="space-y-3">
+                    <a href="#" id="link-preview-direct" target="_blank" class="flex items-center justify-between p-3 bg-brand-cream rounded-xl hover:bg-brand-sage/10 transition group">
+                        <span class="text-sm font-semibold text-brand-dark"><i class="fa-solid fa-eye text-brand-sage mr-2"></i>Pratinjau Undangan</span>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-brand-sage text-xs"></i>
+                    </a>
+                    <a href="Tamu/index.html" class="flex items-center justify-between p-3 bg-brand-cream rounded-xl hover:bg-brand-sage/10 transition">
+                        <span class="text-sm font-semibold text-brand-dark"><i class="fa-solid fa-book-open-reader text-brand-sage mr-2"></i>Buku Tamu RSVP</span>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-brand-sage text-xs"></i>
+                    </a>
+                    <a href="index.html" class="flex items-center justify-between p-3 bg-brand-cream rounded-xl hover:bg-brand-sage/10 transition">
+                        <span class="text-sm font-semibold text-brand-dark"><i class="fa-solid fa-house text-brand-sage mr-2"></i>Kembali ke Portal</span>
+                        <i class="fa-solid fa-arrow-right text-brand-sage text-xs"></i>
+                    </a>
+                    <button onclick="logoutAdmin()" class="w-full flex items-center justify-between p-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition text-left">
+                        <span class="text-sm font-semibold"><i class="fa-solid fa-right-from-bracket mr-2"></i>Keluar (Logout)</span>
+                        <i class="fa-solid fa-right-from-bracket text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+        </div><!-- end panel-bagikan -->
+
+        <!-- ========================= -->
+        <!-- TAB 6: KELOLA KLIEN (ADMIN ONLY) -->
+        <!-- ========================= -->
+        <div id="panel-klien" class="tab-panel space-y-5">
+            <div class="card-section border-red-200">
+                <div class="flex items-center justify-between mb-5">
+                    <h3 class="font-bold text-brand-dark"><i class="fa-solid fa-user-shield text-red-500 mr-2"></i>Daftar Klien</h3>
+                    <button onclick="document.getElementById('modal-tambah-klien').classList.remove('hidden')" class="bg-red-50 text-red-600 text-xs font-bold px-4 py-2 rounded-lg hover:bg-red-100 transition">
+                        <i class="fa-solid fa-plus mr-1"></i> Buat Akun Klien
+                    </button>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-gray-500">
+                        <thead class="text-xs text-brand-sage uppercase bg-brand-sage/5">
+                            <tr>
+                                <th class="px-4 py-3 rounded-l-lg">Email Klien</th>
+                                <th class="px-4 py-3">Tema Dipilih</th>
+                                <th class="px-4 py-3 text-center">Status</th>
+                                <th class="px-4 py-3 text-right rounded-r-lg">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="client-table-body">
+                            <!-- Diisi oleh JS -->
+                            <tr><td colspan="4" class="text-center py-4">Memuat data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div><!-- end panel-klien -->
+
+    </div><!-- end max-w container -->
+
+    <!-- Modal Tambah Klien -->
+    <div id="modal-tambah-klien" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <h3 class="font-bold text-lg mb-4 text-brand-dark">Buat Akun Klien Baru</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="form-label">Email Klien</label>
+                    <input type="email" id="new-client-email" class="form-input" placeholder="klien@email.com">
+                </div>
+                <div>
+                    <label class="form-label">Password</label>
+                    <input type="text" id="new-client-pass" class="form-input" placeholder="Minimal 6 karakter">
+                </div>
+                <div>
+                    <label class="form-label">Tema</label>
+                    <select id="new-client-tema" class="form-input">
+                        <option value="green">Green (Sage & Gold)</option>
+                        <option value="flora-pink">Flora Pink</option>
+                    </select>
+                </div>
+                <div class="flex gap-2 mt-6">
+                    <button onclick="document.getElementById('modal-tambah-klien').classList.add('hidden')" class="flex-1 py-2.5 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200">Batal</button>
+                    <button id="btn-create-client" class="flex-1 py-2.5 bg-brand-sage text-white font-bold rounded-xl hover:bg-brand-dark">Buat Akun</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sticky Save Button (Mobile) -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-brand-sage/10 p-4 sm:hidden z-40">
+        <button onclick="saveAllData()" class="w-full py-4 bg-brand-sage text-white font-bold rounded-xl hover:bg-brand-dark transition shadow-lg flex items-center justify-center gap-2">
+            <i class="fa-solid fa-floppy-disk"></i> Simpan & Terapkan Perubahan
+        </button>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="saved-toast" id="saved-toast">
+        <i class="fa-solid fa-circle-check"></i> Data berhasil disimpan!
+    </div>
+
+    <!-- ============================= -->
+    <!-- JAVASCRIPT                    -->
+    <!-- ============================= -->
+    <script type="module" src="admin.js"></script>
+</body>
+</html>

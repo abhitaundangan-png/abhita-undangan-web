@@ -1,0 +1,54 @@
+{
+  "informasi_website": {
+    "judul_halaman": "Undangan Pernikahan - Raditya & Kirana",
+    "mempelai_pria": "Raditya",
+    "mempelai_wanita": "Kirana"
+  },
+  "mempelai_pria": {
+    "nama_lengkap": "Raditya Pratama, S.T.",
+    "nama_panggilan": "Raditya",
+    "orang_tua": "Bapak Ahmad Pratama & Ibu Siti Aminah",
+    "instagram": "@radityaprtm",
+    "link_instagram": "https://instagram.com/radityaprtm"
+  },
+  "mempelai_wanita": {
+    "nama_lengkap": "Kirana Larasati, S.E.",
+    "nama_panggilan": "Kirana",
+    "orang_tua": "Bapak Budi Santoso & Ibu Ratna Sari",
+    "instagram": "@kiranalaras",
+    "link_instagram": "https://instagram.com/kiranalaras"
+  },
+  "waktu_pernikahan": {
+    "hari_tanggal_utama": "Sabtu, 25 Juli 2026",
+    "target_countdown": "2026-07-25T08:00:00"
+  },
+  "detail_acara": {
+    "akad_nikah": {
+      "hari_tanggal": "Sabtu, 25 Juli 2026",
+      "waktu": "08.00 WIB - Selesai",
+      "tempat": "Masjid Agung Al-Falah",
+      "alamat_lengkap": "Jl. Bunga Mawar No. 12, Kebayoran Baru, Jakarta Selatan",
+      "link_google_maps": "https://maps.google.com"
+    },
+    "resepsi": {
+      "hari_tanggal": "Sabtu, 25 Juli 2026",
+      "waktu": "11.00 - 14.00 WIB",
+      "tempat": "Grand Ballroom Serbaguna",
+      "alamat_lengkap": "Jl. Bunga Mawar No. 15, Kebayoran Baru, Jakarta Selatan",
+      "link_google_maps": "https://maps.google.com"
+    }
+  },
+  "daftar_aset_lokal": {
+    "latar_belakang": "assets/background.jpg",
+    "foto_mempelai_pria": "assets/groom.jpg",
+    "foto_mempelai_wanita": "assets/bride.jpg",
+    "musik_pengiring": "assets/music.mp3",
+    "galeri": [
+      "assets/gallery/1.jpg",
+      "assets/gallery/2.jpg",
+      "assets/gallery/3.jpg",
+      "assets/gallery/4.jpg",
+      "assets/gallery/5.jpg"
+    ]
+  }
+}

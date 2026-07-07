@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Admin | Abhita Undangan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { dark: '#1e2d24', sage: '#4A7c59', cream: '#fbf9f6', gold: '#C5A880', pink: '#D9A0A0' }
+                    },
+                    fontFamily: {
+                        serif: ['Playfair Display', 'serif'],
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #fbf9f6; font-family: 'Plus Jakarta Sans', sans-serif; }
+        .glass-card { background: rgba(255,255,255,0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.5); }
+        .shake { animation: shake 0.4s ease-in-out; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+    </style>
+</head>
+<body class="min-h-screen antialiased text-brand-dark flex flex-col justify-between relative overflow-hidden">
+    
+    <!-- Decorative background blobs -->
+    <div class="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-brand-sage/5 blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-brand-pink/5 blur-3xl pointer-events-none"></div>
+
+    <!-- Header / Brand logo -->
+    <header class="p-6">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-brand-dark flex items-center justify-center text-white shadow">
+                    <i class="fa-solid fa-leaf text-sm"></i>
+                </div>
+                <div>
+                    <p class="font-serif text-base font-bold leading-tight text-brand-dark">ABHITA UNDANGAN</p>
+                    <p class="text-[8px] uppercase tracking-widest text-brand-sage font-bold">Admin Portal</p>
+                </div>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow flex items-center justify-center px-4 py-12 relative z-10">
+        <div id="login-container" class="glass-card w-full max-w-md p-8 sm:p-10 rounded-[2.5rem] shadow-[0_20px_50px_rgba(74,124,89,0.12)]">
+            
+            <div class="text-center mb-8">
+                <div class="w-14 h-14 bg-brand-sage/10 text-brand-sage rounded-2xl flex items-center justify-center text-2xl mx-auto mb-4">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h1 class="font-serif text-2xl sm:text-3xl font-bold text-brand-dark mb-2">Akses Terproteksi</h1>
+                <p class="text-gray-500 text-xs sm:text-sm font-light">Masukkan ID Pengguna dan Password untuk melanjutkan ke editor undangan.</p>
+            </div>
+
+            <!-- Form -->
+            <form id="login-form" class="space-y-5">
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-wider text-brand-sage mb-2">Email Pengguna</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
+                            <i class="fa-solid fa-envelope text-sm"></i>
+                        </span>
+                        <input type="email" id="email" required placeholder="Contoh: admin@abhita.com" class="w-full pl-10 pr-4 py-3 bg-white border border-brand-sage/20 rounded-xl focus:outline-none focus:border-brand-sage focus:ring-2 focus:ring-brand-sage/10 text-sm transition-all duration-300">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-wider text-brand-sage mb-2">Password</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400">
+                            <i class="fa-solid fa-key text-sm"></i>
+                        </span>
+                        <input type="password" id="password" required placeholder="••••••••" class="w-full pl-10 pr-11 py-3 bg-white border border-brand-sage/20 rounded-xl focus:outline-none focus:border-brand-sage focus:ring-2 focus:ring-brand-sage/10 text-sm transition-all duration-300">
+                        <button type="button" id="toggle-password" onclick="togglePassword()" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-brand-sage transition-colors duration-200">
+                            <i id="eye-icon" class="fa-solid fa-eye text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Error feedback banner -->
+                <div id="error-banner" class="hidden p-3 bg-red-50 text-red-700 border border-red-200 rounded-xl text-xs flex items-center gap-2">
+                    <i class="fa-solid fa-circle-exclamation text-sm"></i>
+                    <span id="error-message">Email atau Password salah!</span>
+                </div>
+
+                <button type="submit" id="submit-btn" class="w-full py-3.5 bg-brand-sage hover:bg-brand-dark text-white font-bold rounded-xl transition shadow-md flex items-center justify-center gap-2 text-sm">
+                    <i class="fa-solid fa-right-to-bracket"></i> <span id="btn-text">Masuk Sekarang</span>
+                </button>
+            </form>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="p-6 text-center text-xs text-gray-400">
+        <p>&copy; 2026 Abhita Undangan Demak. All rights reserved.</p>
+    </footer>
+
+    <!-- Logic -->
+    <script type="module">
+        import { auth, db, setPersistence, browserSessionPersistence, signInWithEmailAndPassword, onAuthStateChanged, doc, getDoc, signOut } from './fb.js';
+
+        const form = document.getElementById('login-form');
+        const errorBanner = document.getElementById('error-banner');
+        const errorMsg = document.getElementById('error-message');
+        const container = document.getElementById('login-container');
+        const btnText = document.getElementById('btn-text');
+
+        // Cek jika sudah login
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // Jangan langsung alihkan, cek apakah dia aktif!
+                try {
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    if (userDoc.exists() && userDoc.data().isActive === false) {
+                        // Klien dinonaktifkan oleh admin!
+                        await signOut(auth);
+                        showError("Akses Anda telah dicabut oleh Admin.");
+                    } else {
+                        // Boleh masuk
+                        const redirect = sessionStorage.getItem('auth_redirect') || 'admin.html';
+                        sessionStorage.removeItem('auth_redirect');
+                        window.location.href = redirect;
+                    }
+                } catch (e) {
+                    // Jika error baca (misal karena rule), anggap admin atau boleh masuk
+                    const redirect = sessionStorage.getItem('auth_redirect') || 'admin.html';
+                    window.location.href = redirect;
+                }
+            }
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const pass = document.getElementById('password').value;
+
+            errorBanner.classList.add('hidden');
+            container.classList.remove('shake');
+            btnText.textContent = "Memproses...";
+
+            try {
+                // Set persistence: Session (otomatis logout saat tutup browser)
+                await setPersistence(auth, browserSessionPersistence);
+                
+                // Coba Login
+                await signInWithEmailAndPassword(auth, email, pass);
+                // Jika sukses, onAuthStateChanged di atas akan terpanggil dan mengalihkan ke admin.html
+            } catch (error) {
+                console.error(error);
+                let pesan = "Email atau Password salah!";
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                    pesan = "Email atau password tidak ditemukan.";
+                } else if (error.code === 'auth/too-many-requests') {
+                    pesan = "Terlalu banyak percobaan gagal. Coba lagi nanti.";
+                } else {
+                    pesan = error.message;
+                }
+                showError(pesan);
+                btnText.textContent = "Masuk Sekarang";
+            }
+        });
+
+        function showError(msg) {
+            errorMsg.textContent = msg;
+            setTimeout(() => {
+                container.classList.add('shake');
+                errorBanner.classList.remove('hidden');
+            }, 50);
+        }
+    </script>
+
+    <!-- Fungsi toggle password (harus di luar module agar bisa dipanggil oleh onclick) -->
+    <script>
+        function togglePassword() {
+            const input = document.getElementById('password');
+            const icon = document.getElementById('eye-icon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+    </script>
+</body>
+</html>
